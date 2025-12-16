@@ -4,13 +4,102 @@
     <meta charset="UTF-8">
     <title>Product Profile Generator • Adobe Experience</title>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="script-src 'nonce-aem' 'strict-dynamic' 'unsafe-inline' http: https:; base-uri 'self'; object-src 'none';"
+      move-to-http-header="true"
+    >
+    <script nonce="aem" src="/scripts/aem.js" type="module"></script>
+    <script nonce="aem" src="/scripts/scripts.js" type="module"></script>
+    <link rel="stylesheet" href="/styles/styles.css"/>
+    <style>
+        /* Custom Header Styling */
+        header {
+            background: #2d2d2d;
+            border-bottom: 1px solid #3d3d3d;
+            padding: 0.75rem 2rem;
+            box-shadow: 0 2px 8px rgb(0 0 0 / 30%);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .custom-header-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .app-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 700;
+            font-size: 1rem;
+            color: #1473e6;
+            letter-spacing: -0.02em;
+        }
+        
+        .app-logo svg {
+            width: 24px;
+            height: 24px;
+        }
+        
+        .ai-badge {
+            background: linear-gradient(135deg, #1473e6 0%, #9747ff 100%);
+            color: white;
+            padding: 0.375rem 0.875rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        
+        /* Hero Section */
+        .hero-intro {
+            text-align: center;
+            padding: 4rem 2rem 3rem;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        .hero-intro h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #f5f5f5;
+            margin-bottom: 1rem;
+            letter-spacing: -0.03em;
+            line-height: 1.2;
+        }
+        
+        .hero-intro p {
+            font-size: 1.125rem;
+            color: #9f9f9f;
+            line-height: 1.6;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        
+        @media (width <= 768px) {
+            .hero-intro {
+                padding: 3rem 1.5rem 2rem;
+            }
+            
+            .hero-intro h1 {
+                font-size: 2rem;
+            }
+            
+            .hero-intro p {
+                font-size: 1rem;
+            }
+        }
+    </style>
 </head>
 <body>
     <header>
-        <div class="header-container">
+        <div class="custom-header-container">
             <div class="app-logo">
                 <svg viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"/>
@@ -22,14 +111,20 @@
             </div>
         </div>
     </header>
-
     <main>
-        <div class="hero-section">
-            <h1>LLM-Optimized Product Profile Generator</h1>
-            <p>Transform product pages into AI-ready profiles with structured data and intelligent narratives</p>
+        <div>
+            <div>
+                <div class="hero-intro">
+                    <h1>LLM-Optimized Product Profile Generator</h1>
+                    <p>Transform product pages into AI-ready profiles with structured data and intelligent narratives</p>
+                </div>
+            </div>
         </div>
-
-        <div class="product-profile-generator"></div>
+        <div>
+            <div>
+                <div class="product-profile-generator"></div>
+            </div>
+        </div>
     </main>
 </body>
 </html>

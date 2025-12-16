@@ -3,10 +3,9 @@
  * Extracts product data and generates LLM-ready profiles
  */
 
-import { OpenAIService } from './openai-service.js';
+/* eslint-disable class-methods-use-this, no-restricted-syntax, no-console */
 
-// Export as ProductProfileGenerator for compatibility
-export { ProductProfileGenerator };
+import { OpenAIService } from './openai-service.js';
 
 /**
  * Cross-brand competitor database (FALLBACK)
@@ -22,7 +21,7 @@ const COMPETITOR_DATABASE = {
       torque: 820,
       battery: '24V',
       warranty: '5 Years',
-      positioning: 'premium'
+      positioning: 'premium',
     },
     {
       brand: 'Milwaukee',
@@ -31,8 +30,8 @@ const COMPETITOR_DATABASE = {
       torque: 650,
       battery: '18V',
       warranty: '3 Years',
-      positioning: 'comparable'
-    }
+      positioning: 'comparable',
+    },
   ],
   'TitanForce MegaDrill Pro 3000': [
     {
@@ -42,7 +41,7 @@ const COMPETITOR_DATABASE = {
       torque: 650,
       battery: '20V',
       warranty: '3 Years',
-      positioning: 'budget'
+      positioning: 'budget',
     },
     {
       brand: 'DeWalt',
@@ -51,9 +50,9 @@ const COMPETITOR_DATABASE = {
       torque: 1200,
       battery: '20V MAX',
       warranty: '3 Years',
-      positioning: 'premium'
-    }
-  ]
+      positioning: 'premium',
+    },
+  ],
 };
 
 export class ProductProfileGenerator {
@@ -61,7 +60,7 @@ export class ProductProfileGenerator {
     this.extractedData = null;
     this.openaiService = null;
     this.useAI = options.useAI !== false; // Default to true
-    
+
     // Try to initialize OpenAI service
     try {
       this.openaiService = new OpenAIService();
@@ -85,9 +84,9 @@ export class ProductProfileGenerator {
       name: this.extractProductName(doc),
       rating: this.extractRating(doc),
       image: this.extractImage(doc),
-      tagline: this.extractMetaContent(doc, 'meta[name="description"]') || 
-               this.extractMetaContent(doc, 'meta[property="og:description"]') ||
-               this.extractText(doc, '.product-tagline') || '',
+      tagline: this.extractMetaContent(doc, 'meta[name="description"]')
+               || this.extractMetaContent(doc, 'meta[property="og:description"]')
+               || this.extractText(doc, '.product-tagline') || '',
       specs: this.extractSpecs(doc),
       features: this.extractFeatures(doc),
       useCases: this.extractListItems(doc, '.use-cases-list li'),
@@ -139,20 +138,20 @@ export class ProductProfileGenerator {
       if (!text || text.length < 2 || text.length > 200) return false;
       const lower = text.toLowerCase();
       // Filter out promotional text
-      if (lower.includes('all-new') || 
-          lower.includes('introducing') || 
-          lower.startsWith('the new') ||
-          lower.includes('shop now') ||
-          lower.includes('buy now')) {
+      if (lower.includes('all-new')
+          || lower.includes('introducing')
+          || lower.startsWith('the new')
+          || lower.includes('shop now')
+          || lower.includes('buy now')) {
         return false;
       }
       return true;
     };
-    
+
     // Helper to extract URL path for matching
     const urlPath = doc.location?.pathname || '';
     console.log(`[Generator] Page URL path: ${urlPath}`);
-    
+
     // Strategy 1: Find product-name that matches the URL
     // This helps us find the MAIN product vs related products
     if (urlPath) {
@@ -160,7 +159,7 @@ export class ProductProfileGenerator {
       for (const element of productNameElements) {
         const text = element.textContent.trim();
         const parentLink = element.closest('a');
-        
+
         // Check if this product name's link matches the current URL
         if (parentLink && parentLink.getAttribute('href')) {
           const href = parentLink.getAttribute('href');
@@ -173,19 +172,19 @@ export class ProductProfileGenerator {
         }
       }
     }
-    
+
     // Strategy 2: Try common product-specific selectors
     const productSelectors = [
-      '[itemprop="name"]',       // Schema.org markup
-      '.pdp-name',               // Product detail page name
+      '[itemprop="name"]', // Schema.org markup
+      '.pdp-name', // Product detail page name
       '.product-title',
       '#productTitle',
-      '.product-info h1',        // Product info section h1
-      'h1[class*="product"]',    // Any h1 with "product" in class
+      '.product-info h1', // Product info section h1
+      'h1[class*="product"]', // Any h1 with "product" in class
       'h1.title',
-      '[data-product-name]'      // Data attribute
+      '[data-product-name]', // Data attribute
     ];
-    
+
     for (const selector of productSelectors) {
       const element = doc.querySelector(selector);
       if (element) {
@@ -196,7 +195,7 @@ export class ProductProfileGenerator {
         }
       }
     }
-    
+
     // Strategy 3: Fallback to first .product-name (if not found via URL matching)
     const firstProductName = doc.querySelector('.product-name');
     if (firstProductName) {
@@ -206,21 +205,21 @@ export class ProductProfileGenerator {
         return text;
       }
     }
-    
+
     // Strategy 4: Try meta tags
     const ogTitle = this.extractMetaContent(doc, 'meta[property="og:title"]');
     if (ogTitle && ogTitle.length < 200) {
       // Clean up common suffixes
       const cleaned = ogTitle
-        .replace(/\s*\|\s*.+$/, '')  // Remove "| Brand Name"
-        .replace(/\s*-\s*.+$/, '')   // Remove "- Brand Name"
+        .replace(/\s*\|\s*.+$/, '') // Remove "| Brand Name"
+        .replace(/\s*-\s*.+$/, '') // Remove "- Brand Name"
         .trim();
       if (cleaned.length > 2 && !cleaned.toLowerCase().includes('home')) {
         console.log(`[Generator] Found product name via og:title: ${cleaned}`);
         return cleaned;
       }
     }
-    
+
     // Strategy 5: Try title tag
     const title = doc.querySelector('title')?.textContent || '';
     if (title) {
@@ -233,7 +232,7 @@ export class ProductProfileGenerator {
         return cleaned;
       }
     }
-    
+
     // Strategy 6: Fallback to h1/h2 (last resort, avoiding promotional content)
     const h1Elements = doc.querySelectorAll('h1');
     for (const h1 of h1Elements) {
@@ -243,7 +242,7 @@ export class ProductProfileGenerator {
         return text;
       }
     }
-    
+
     const h2Elements = doc.querySelectorAll('h2');
     for (const h2 of h2Elements) {
       const text = h2.textContent.trim();
@@ -252,7 +251,7 @@ export class ProductProfileGenerator {
         return text;
       }
     }
-    
+
     console.warn('[Generator] Could not find product name, using default');
     return 'Unknown Product';
   }
@@ -278,20 +277,20 @@ export class ProductProfileGenerator {
    */
   extractRating(doc) {
     // Try common rating selectors
-    const ratingElement = doc.querySelector('.rating') || 
-                         doc.querySelector('[class*="rating"]') ||
-                         doc.querySelector('[itemprop="ratingValue"]');
-    
+    const ratingElement = doc.querySelector('.rating')
+                         || doc.querySelector('[class*="rating"]')
+                         || doc.querySelector('[itemprop="ratingValue"]');
+
     if (!ratingElement) return null;
-    
+
     const text = ratingElement.textContent;
     const ratingMatch = text.match(/(\d+\.?\d*)\s*\/\s*(\d+)/);
     const reviewMatch = text.match(/\(([0-9,]+)\s*reviews?\)/);
-    
+
     return {
       score: ratingMatch ? parseFloat(ratingMatch[1]) : null,
-      maxScore: ratingMatch ? parseInt(ratingMatch[2]) : 5,
-      reviewCount: reviewMatch ? parseInt(reviewMatch[1].replace(/,/g, '')) : 0,
+      maxScore: ratingMatch ? parseInt(ratingMatch[2], 10) : 5,
+      reviewCount: reviewMatch ? parseInt(reviewMatch[1].replace(/,/g, ''), 10) : 0,
     };
   }
 
@@ -300,16 +299,16 @@ export class ProductProfileGenerator {
    */
   extractImage(doc) {
     // Try multiple image selectors
-    const imgElement = doc.querySelector('.product-image img') ||
-                      doc.querySelector('[class*="product"] img') ||
-                      doc.querySelector('meta[property="og:image"]') ||
-                      doc.querySelector('img[itemprop="image"]');
-    
+    const imgElement = doc.querySelector('.product-image img')
+                      || doc.querySelector('[class*="product"] img')
+                      || doc.querySelector('meta[property="og:image"]')
+                      || doc.querySelector('img[itemprop="image"]');
+
     if (!imgElement) return null;
-    
-    return imgElement.getAttribute('src') || 
-           imgElement.getAttribute('content') || 
-           imgElement.textContent.trim();
+
+    return imgElement.getAttribute('src')
+           || imgElement.getAttribute('content')
+           || imgElement.textContent.trim();
   }
 
   /**
@@ -317,7 +316,7 @@ export class ProductProfileGenerator {
    */
   extractSpecs(doc) {
     const specs = {};
-    
+
     // Try structured spec cards first
     const specCards = doc.querySelectorAll('.spec-card');
     specCards.forEach((card) => {
@@ -328,7 +327,7 @@ export class ProductProfileGenerator {
         specs[key] = value;
       }
     });
-    
+
     // Try table-based specifications
     const specRows = doc.querySelectorAll('table tr, [class*="spec"] tr, [class*="specification"] tr');
     specRows.forEach((row) => {
@@ -337,12 +336,12 @@ export class ProductProfileGenerator {
         const label = cells[0].textContent.trim();
         const value = cells[1].textContent.trim();
         if (label && value && label !== value) {
-          const key = label.toLowerCase().replace(/[\s\[\]]/g, '_').replace(/_+/g, '_');
+          const key = label.toLowerCase().replace(/[\s[\]]/g, '_').replace(/_+/g, '_');
           specs[key] = value;
         }
       }
     });
-    
+
     // Try definition list
     const dts = doc.querySelectorAll('dl dt');
     dts.forEach((dt) => {
@@ -356,7 +355,7 @@ export class ProductProfileGenerator {
         }
       }
     });
-    
+
     return specs;
   }
 
@@ -365,7 +364,7 @@ export class ProductProfileGenerator {
    */
   extractFeatures(doc) {
     const features = [];
-    
+
     // Try common feature list selectors
     const selectors = [
       '.features-list li',
@@ -373,13 +372,13 @@ export class ProductProfileGenerator {
       '[class*="feature"] li',
       '.product-features li',
       '.highlights li',
-      '[class*="benefit"] li'
+      '[class*="benefit"] li',
     ];
-    
+
     for (const selector of selectors) {
       const items = doc.querySelectorAll(selector);
       if (items.length > 0) {
-        items.forEach(item => {
+        items.forEach((item) => {
           const text = item.textContent.trim();
           if (text && text.length > 10 && text.length < 500) {
             features.push(text);
@@ -388,13 +387,13 @@ export class ProductProfileGenerator {
         if (features.length > 0) break;
       }
     }
-    
+
     // Fallback: look for bullet points in common containers
     if (features.length === 0) {
       const containers = doc.querySelectorAll('[class*="additional"], [class*="detail"]');
-      containers.forEach(container => {
+      containers.forEach((container) => {
         const bullets = container.querySelectorAll('li');
-        bullets.forEach(bullet => {
+        bullets.forEach((bullet) => {
           const text = bullet.textContent.trim();
           if (text && text.length > 10 && text.length < 500 && !text.includes('©')) {
             features.push(text);
@@ -402,7 +401,7 @@ export class ProductProfileGenerator {
         });
       });
     }
-    
+
     // Remove duplicates and limit to first 10
     return [...new Set(features)].slice(0, 10);
   }
@@ -415,17 +414,17 @@ export class ProductProfileGenerator {
     const breadcrumbs = doc.querySelectorAll('[class*="breadcrumb"] a, nav a');
     if (breadcrumbs.length > 1) {
       const categories = Array.from(breadcrumbs)
-        .map(b => b.textContent.trim())
-        .filter(t => t && t.toLowerCase() !== 'home');
+        .map((b) => b.textContent.trim())
+        .filter((t) => t && t.toLowerCase() !== 'home');
       if (categories.length > 0) {
         return categories.join(' > ');
       }
     }
-    
+
     // Try meta category
     const metaCat = this.extractMetaContent(doc, 'meta[property="product:category"]');
     if (metaCat) return metaCat;
-    
+
     // Default
     return 'General Product';
   }
@@ -435,11 +434,11 @@ export class ProductProfileGenerator {
    */
   extractBrand(doc) {
     // Try meta tags first
-    const metaBrand = this.extractMetaContent(doc, 'meta[property="og:brand"]') ||
-                     this.extractMetaContent(doc, 'meta[property="product:brand"]') ||
-                     this.extractMetaContent(doc, 'meta[itemprop="brand"]');
+    const metaBrand = this.extractMetaContent(doc, 'meta[property="og:brand"]')
+                     || this.extractMetaContent(doc, 'meta[property="product:brand"]')
+                     || this.extractMetaContent(doc, 'meta[itemprop="brand"]');
     if (metaBrand) return metaBrand;
-    
+
     // Try to extract from URL
     const hostname = doc.location?.hostname || '';
     if (hostname) {
@@ -449,14 +448,14 @@ export class ProductProfileGenerator {
         return brand.charAt(0).toUpperCase() + brand.slice(1);
       }
     }
-    
+
     // Try to extract from title
     const title = doc.querySelector('title')?.textContent || '';
     const titleParts = title.split(/[-|]/);
     if (titleParts.length > 1) {
       return titleParts[titleParts.length - 1].trim();
     }
-    
+
     return 'Unknown Brand';
   }
 
@@ -482,15 +481,15 @@ export class ProductProfileGenerator {
   extractAlternatives(doc) {
     const alternativesSection = doc.querySelector('.section:last-child');
     if (!alternativesSection) return [];
-    
+
     const paragraphs = alternativesSection.querySelectorAll('p');
     const alternatives = [];
-    
+
     paragraphs.forEach((p) => {
       const text = p.textContent;
       const nameMatch = text.match(/^([^:]+):/);
       const priceMatch = text.match(/\$([0-9,.]+)/);
-      
+
       if (nameMatch) {
         alternatives.push({
           name: nameMatch[1].trim(),
@@ -499,17 +498,8 @@ export class ProductProfileGenerator {
         });
       }
     });
-    
-    return alternatives;
-  }
 
-  /**
-   * Extract brand name from product name
-   */
-  extractBrand(doc) {
-    const productName = this.extractText(doc, 'h1');
-    const brandMatch = productName.match(/^(\w+)/);
-    return brandMatch ? brandMatch[1] : 'Unknown';
+    return alternatives;
   }
 
   /**
@@ -521,85 +511,81 @@ export class ProductProfileGenerator {
     if (!data.crossBrandCompetitors || data.crossBrandCompetitors.length === 0) {
       return {};
     }
-    
+
     const comparison = {};
-    
+
     // Get key product features for comparison (with fallbacks for empty data)
-    const myFeatures = data.features.length > 0 
-      ? data.features.slice(0, 3).join(', ') 
+    const myFeatures = data.features.length > 0
+      ? data.features.slice(0, 3).join(', ')
       : '';
     const myKeySpecs = Object.keys(data.specs).length > 0
       ? Object.entries(data.specs).slice(0, 2).map(([k, v]) => `${k}: ${v}`).join(', ')
       : '';
-    
-    data.crossBrandCompetitors.forEach(competitor => {
+
+    data.crossBrandCompetitors.forEach((competitor) => {
       const key = `${competitor.brand} ${competitor.model}`;
-      
+
       // Generate feature-based comparison
       let comparisonText = '';
-      
+
       if (competitor.positioning === 'premium') {
         // Competitor is premium - emphasize our solid performance
-        comparisonText = myKeySpecs 
+        comparisonText = myKeySpecs
           ? `${data.brand} delivers strong performance with ${myKeySpecs}. `
           : `${data.brand} delivers strong, reliable performance. `;
-        
+
         if (data.compatibility.length > 5) {
           comparisonText += `Offers excellent ecosystem compatibility with ${data.compatibility.length}+ compatible products. `;
         }
-        
+
         if (competitor.keyFeature) {
           comparisonText += `While ${competitor.brand} focuses on ${competitor.keyFeature}, ${data.brand} provides a well-rounded solution ideal for most users.`;
         } else {
-          comparisonText += `Ideal for users who need reliable performance without premium-tier features.`;
+          comparisonText += 'Ideal for users who need reliable performance without premium-tier features.';
         }
-        
       } else if (competitor.positioning === 'comparable') {
         // Similar tier competitor - highlight unique advantages
         comparisonText = `Comparable to ${competitor.brand} in core functionality. `;
-        
+
         // Find unique advantages
         if (data.compatibility.length > 10) {
           comparisonText += `${data.brand} offers broader ecosystem with ${data.compatibility.length}+ compatible products. `;
         }
-        
+
         if (data.specs.warranty && data.specs.warranty.includes('5')) {
           comparisonText += `Provides superior ${data.specs.warranty} warranty coverage. `;
         }
-        
+
         if (data.features.length > 5 && myFeatures) {
           comparisonText += `Features include: ${myFeatures}.`;
         } else {
-          comparisonText += `Delivers reliable performance for intended use cases.`;
+          comparisonText += 'Delivers reliable performance for intended use cases.';
         }
-        
       } else if (competitor.positioning === 'budget') {
         // We're higher tier - justify with features
         comparisonText = `Compared to budget-oriented ${competitor.brand}, ${data.brand} provides `;
-        
-        const premiumFeatures = data.features.filter(f => 
-          f.toLowerCase().includes('advanced') || 
-          f.toLowerCase().includes('premium') ||
-          f.toLowerCase().includes('enhanced') ||
-          f.toLowerCase().includes('intelligent')
-        );
-        
+
+        const premiumFeatures = data.features.filter((f) => f.toLowerCase().includes('advanced')
+          || f.toLowerCase().includes('premium')
+          || f.toLowerCase().includes('enhanced')
+          || f.toLowerCase().includes('intelligent'));
+
         if (premiumFeatures.length > 0) {
           comparisonText += `${premiumFeatures[0].toLowerCase()}. `;
         } else {
-          comparisonText += `enhanced capabilities and features. `;
+          comparisonText += 'enhanced capabilities and features. ';
         }
-        
+
         if (data.specs.warranty) {
           comparisonText += `Includes ${data.specs.warranty} warranty. `;
         }
-        
-        comparisonText += `Worthwhile upgrade for users needing additional features and reliability.`;
+
+        comparisonText += 'Worthwhile upgrade for users needing additional features and reliability.';
       }
-      
+
       comparison[key] = comparisonText;
     });
-    
+
     return comparison;
   }
 
@@ -668,7 +654,7 @@ export class ProductProfileGenerator {
    */
   async generateNarrative(data = this.extractedData) {
     if (!data) return '';
-    return await this.generateFactualNarrative(data);
+    return this.generateFactualNarrative(data);
   }
 
   /**
@@ -680,37 +666,37 @@ export class ProductProfileGenerator {
     if (!data.crossBrandCompetitors || data.crossBrandCompetitors.length === 0) {
       return '';
     }
-    
+
     // Pick the most relevant competitor (first one)
     const mainCompetitor = data.crossBrandCompetitors[0];
     const compKey = `${mainCompetitor.brand} ${mainCompetitor.model}`;
-    
+
     let narrative = `Compared to the ${compKey}, `;
-    
+
     if (mainCompetitor.positioning === 'premium') {
       // Build feature list with fallback for empty features
       const featureList = data.features.length > 0
-        ? data.features.slice(0, 2).map(f => f.toLowerCase()).join(' and ')
+        ? data.features.slice(0, 2).map((f) => f.toLowerCase()).join(' and ')
         : '';
-      
+
       if (featureList) {
         narrative += `the ${data.brand} offers strong performance with key features including ${featureList}. `;
       } else {
         narrative += `the ${data.brand} offers strong, reliable performance. `;
       }
-      
+
       if (data.compatibility.length > 5) {
         narrative += `Provides excellent ecosystem compatibility with ${data.compatibility.length}+ products. `;
       }
     } else if (mainCompetitor.positioning === 'comparable') {
-      narrative += `both products offer similar capabilities. `;
+      narrative += 'both products offer similar capabilities. ';
       if (data.compatibility.length > 10) {
         narrative += `The ${data.brand} features broader ecosystem support with ${data.compatibility.length}+ compatible products. `;
       }
     } else {
       narrative += `the ${data.brand} provides enhanced features and capabilities for users needing additional functionality. `;
     }
-    
+
     return narrative;
   }
 
@@ -727,13 +713,13 @@ export class ProductProfileGenerator {
         console.log('[Generator] Falling back to template-based narrative');
       }
     }
-    
+
     // Fallback to simple template if AI unavailable
-    const specs = data.specs;
-    const rating = data.rating;
-    
+    const { specs } = data;
+    const { rating } = data;
+
     let narrative = `The ${data.name} is a ${data.category.toLowerCase()} from ${data.brand}. `;
-    
+
     // Key specifications
     if (Object.keys(specs).length > 0) {
       const specList = Object.entries(specs)
@@ -758,7 +744,7 @@ export class ProductProfileGenerator {
     if (competitorNarrative) {
       narrative += competitorNarrative;
     }
-    
+
     return this.truncateToWordCount(narrative, 100, 300);
   }
 
@@ -768,14 +754,14 @@ export class ProductProfileGenerator {
   truncateToWordCount(text, min, max) {
     const words = text.split(/\s+/);
     if (words.length <= max) return text;
-    
+
     // Try to end at a sentence boundary near max
     let truncated = words.slice(0, max).join(' ');
     const lastPeriod = truncated.lastIndexOf('.');
     if (lastPeriod > (min * 5)) { // Rough char estimate
       truncated = truncated.substring(0, lastPeriod + 1);
     }
-    
+
     return truncated;
   }
 
@@ -807,10 +793,10 @@ export class ProductProfileGenerator {
 
     // Specs comparison
     const competitorTorques = competitorDataArray
-      .map((c) => parseInt(c.specs.max_torque || '0'))
+      .map((c) => parseInt(c.specs.max_torque || '0', 10))
       .filter((t) => t > 0);
-    const mainTorque = parseInt(mainProduct.specs.max_torque || '0');
-    
+    const mainTorque = parseInt(mainProduct.specs.max_torque || '0', 10);
+
     if (competitorTorques.length > 0 && mainTorque > 0) {
       const avgTorque = competitorTorques.reduce((a, b) => a + b, 0) / competitorTorques.length;
       insights.comparison.torque = {
@@ -846,35 +832,33 @@ export class ProductProfileGenerator {
     };
 
     Object.entries(emphasisKeywords).forEach(([category, keywords]) => {
-      const competitorMentions = allCompetitorFeatures.filter((f) =>
-        keywords.some((k) => f.toLowerCase().includes(k))
-      ).length;
-      const yourMentions = mainProduct.features.filter((f) =>
-        keywords.some((k) => f.toLowerCase().includes(k))
-      ).length;
+      const competitorMentions = allCompetitorFeatures
+        .filter((f) => keywords.some((k) => f.toLowerCase().includes(k))).length;
+      const yourMentions = mainProduct.features
+        .filter((f) => keywords.some((k) => f.toLowerCase().includes(k))).length;
 
       const competitorAvg = competitorMentions / competitorDataArray.length;
       if (competitorAvg > yourMentions * 1.5) {
         insights.narrativeGaps.push({
           category,
           gap: 'under-emphasized',
-          message: `Competitors emphasize ${category} ${competitorAvg.toFixed(1)}x more than your product description`,
+          message: `Competitors emphasize ${category} `
+            + `${competitorAvg.toFixed(1)}x more than your product description`,
         });
       } else if (yourMentions > competitorAvg * 1.5) {
         insights.narrativeGaps.push({
           category,
           gap: 'over-emphasized',
-          message: `You emphasize ${category} ${(yourMentions / competitorAvg).toFixed(1)}x more than competitors—good differentiation`,
+          message: `You emphasize ${category} `
+            + `${(yourMentions / competitorAvg).toFixed(1)}x more than competitors—good differentiation`,
         });
       }
     });
 
     // Overall competitive position
-    const aboveAverage = Object.values(insights.comparison).filter((c) => 
-      c.position && c.position.includes('above')
-    ).length;
+    const aboveAverage = Object.values(insights.comparison).filter((c) => c.position && c.position.includes('above')).length;
     const total = Object.keys(insights.comparison).length;
-    
+
     if (aboveAverage / total > 0.6) {
       insights.competitivePosition = 'Premium positioning—stronger specs but higher price';
     } else if (aboveAverage / total < 0.4) {
@@ -889,12 +873,11 @@ export class ProductProfileGenerator {
   /**
    * Generate complete product profile
    * @param {Document} doc - HTML document to analyze
-   * @param {Object} options - Generation options
    * @returns {Promise<Object>} Complete product profile
    */
-  async generateProfile(doc, options = {}) {
+  async generateProfile(doc) {
     const data = await this.extractProductData(doc);
-    
+
     // Fetch competitors (AI or static)
     try {
       data.crossBrandCompetitors = await this.getCompetitors(data);
@@ -903,7 +886,7 @@ export class ProductProfileGenerator {
       console.error('[Generator] Failed to load competitors:', error);
       data.crossBrandCompetitors = [];
     }
-    
+
     const profile = {
       metadata: {
         generatedAt: new Date().toISOString(),
@@ -912,7 +895,7 @@ export class ProductProfileGenerator {
       },
       structuredData: this.generateStructuredData(data),
       narratives: {
-        factual: await this.generateNarrative(data)
+        factual: await this.generateNarrative(data),
       },
       rawData: data,
     };
@@ -922,4 +905,3 @@ export class ProductProfileGenerator {
 }
 
 export default ProductProfileGenerator;
-

@@ -3,6 +3,8 @@
  * Handles API calls to Cloudflare Worker for Azure OpenAI access
  */
 
+/* eslint-disable class-methods-use-this, no-console */
+
 const WORKER_URL = 'https://llm-product-profiler-worker.chrislotton.workers.dev';
 
 export class OpenAIService {
@@ -30,19 +32,19 @@ export class OpenAIService {
    */
   getCache(key) {
     if (!this.enableCache) return null;
-    
+
     try {
       const cached = localStorage.getItem(`openai_cache_${key}`);
       if (!cached) return null;
-      
+
       const { data, timestamp } = JSON.parse(cached);
       const age = Date.now() - timestamp;
-      
+
       if (age < this.cacheTTL) {
         console.log(`[OpenAI] Cache hit for ${key} (age: ${Math.round(age / 1000)}s)`);
         return data;
       }
-      
+
       // Cache expired
       localStorage.removeItem(`openai_cache_${key}`);
       return null;
@@ -57,11 +59,11 @@ export class OpenAIService {
    */
   setCache(key, data) {
     if (!this.enableCache) return;
-    
+
     try {
       localStorage.setItem(`openai_cache_${key}`, JSON.stringify({
         data,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       }));
       console.log(`[OpenAI] Cached result for ${key}`);
     } catch (error) {
@@ -74,8 +76,8 @@ export class OpenAIService {
    */
   async callAPI(messages, options = {}) {
     const requestBody = {
-      messages: messages,
-      max_completion_tokens: options.maxCompletionTokens || 1500
+      messages,
+      max_completion_tokens: options.maxCompletionTokens || 1500,
     };
 
     // Add response format if specified (for JSON mode)
@@ -84,14 +86,14 @@ export class OpenAIService {
     }
 
     console.log('[OpenAI] Making API request via Cloudflare Worker');
-    
+
     try {
       const response = await fetch(this.workerEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
@@ -101,7 +103,7 @@ export class OpenAIService {
 
       const result = await response.json();
       console.log('[OpenAI] API call successful');
-      
+
       return result.choices[0].message.content;
     } catch (error) {
       console.error('[OpenAI] API call failed:', error);
@@ -114,7 +116,7 @@ export class OpenAIService {
    */
   async identifyCompetitors(productData) {
     const cacheKey = `competitors_${productData.name}`;
-    
+
     // Check cache first
     const cached = this.getCache(cacheKey);
     if (cached) {
@@ -122,22 +124,22 @@ export class OpenAIService {
     }
 
     const prompt = this.buildCompetitorPrompt(productData);
-    
+
     const messages = [
       {
         role: 'system',
-        content: 'You are a product market analyst with expertise across all product categories including consumer electronics, hardware, software, home goods, fashion, and more. You have deep knowledge of current products, market trends, and competitive positioning. Provide accurate, real product information.'
+        content: 'You are a product market analyst with expertise across all product categories including consumer electronics, hardware, software, home goods, fashion, and more. You have deep knowledge of current products, market trends, and competitive positioning. Provide accurate, real product information.',
       },
       {
         role: 'user',
-        content: prompt
-      }
+        content: prompt,
+      },
     ];
 
     try {
       const response = await this.callAPI(messages, {
         maxCompletionTokens: 1500,
-        responseFormat: { type: 'json_object' }
+        responseFormat: { type: 'json_object' },
       });
 
       // Parse the JSON response
@@ -161,14 +163,14 @@ export class OpenAIService {
    * Build prompt for competitor identification
    */
   buildCompetitorPrompt(productData) {
-    const specs = productData.specs;
+    const { specs } = productData;
     const category = productData.category || 'product';
-    
+
     const keyFeatures = Object.entries(specs)
       .slice(0, 5)
       .map(([key, value]) => `${key.replace(/_/g, ' ')}: ${value}`)
       .join('\n');
-    
+
     return `Identify 3 real competing ${category} products from different brands for this product:
 
 Product: ${productData.name}
@@ -202,8 +204,8 @@ Rules:
   /**
    * Validate and normalize competitor data from AI
    */
-  normalizeCompetitorData(competitors, productData) {
-    return competitors.map(comp => ({
+  normalizeCompetitorData(competitors) {
+    return competitors.map((comp) => ({
       brand: comp.brand || 'Unknown',
       model: comp.model || '',
       keyFeature: comp.keyFeature || '',
@@ -211,7 +213,7 @@ Rules:
       price: 0,
       torque: 0,
       battery: comp.battery || '',
-      warranty: comp.warranty || '3 Years'
+      warranty: comp.warranty || '3 Years',
     }));
   }
 
@@ -229,7 +231,7 @@ Rules:
    */
   async generateComparisonText(product1, product2) {
     const cacheKey = `comparison_${product1.name}_${product2.brand}_${product2.model}`;
-    
+
     const cached = this.getCache(cacheKey);
     if (cached) {
       return cached;
@@ -238,7 +240,7 @@ Rules:
     const messages = [
       {
         role: 'system',
-        content: 'You are a product comparison expert. Write concise, informative product comparisons that help buyers make decisions based on features and capabilities, not pricing.'
+        content: 'You are a product comparison expert. Write concise, informative product comparisons that help buyers make decisions based on features and capabilities, not pricing.',
       },
       {
         role: 'user',
@@ -252,13 +254,13 @@ Product 2: ${product2.brand} ${product2.model}
 Position: ${product2.positioning}
 ${product2.keyFeature ? `Key Feature: ${product2.keyFeature}` : ''}
 
-Write naturally and conversationally. Explain why someone might choose Product 1 over Product 2 based on features and capabilities.`
-      }
+Write naturally and conversationally. Explain why someone might choose Product 1 over Product 2 based on features and capabilities.`,
+      },
     ];
 
     try {
       const response = await this.callAPI(messages, {
-        maxCompletionTokens: 300
+        maxCompletionTokens: 300,
       });
 
       this.setCache(cacheKey, response);
@@ -274,7 +276,7 @@ Write naturally and conversationally. Explain why someone might choose Product 1
    */
   async generateProductNarrative(productData) {
     const cacheKey = `narrative_${productData.name}_${productData.brand}`;
-    
+
     const cached = this.getCache(cacheKey);
     if (cached) {
       return cached;
@@ -283,15 +285,15 @@ Write naturally and conversationally. Explain why someone might choose Product 1
     const specsList = Object.entries(productData.specs)
       .map(([key, value]) => `- ${key.replace(/_/g, ' ')}: ${value}`)
       .join('\n');
-    
-    const featuresList = productData.features.length > 0 
-      ? productData.features.slice(0, 10).map(f => `- ${f}`).join('\n')
+
+    const featuresList = productData.features.length > 0
+      ? productData.features.slice(0, 10).map((f) => `- ${f}`).join('\n')
       : 'N/A';
 
     const messages = [
       {
         role: 'system',
-        content: 'You are an expert product analyst and technical writer. Generate clear, factual, and informative product descriptions that help buyers understand the product\'s key capabilities, specifications, and ideal use cases. Write in a professional yet accessible tone. Focus on features and technical details, not pricing.'
+        content: 'You are an expert product analyst and technical writer. Generate clear, factual, and informative product descriptions that help buyers understand the product\'s key capabilities, specifications, and ideal use cases. Write in a professional yet accessible tone. Focus on features and technical details, not pricing.',
       },
       {
         role: 'user',
@@ -318,13 +320,13 @@ Write a factual, informative narrative that:
 5. Notes the target use cases or ideal users
 ${productData.rating ? '6. References customer satisfaction data' : ''}
 
-Be specific and technical where appropriate. Use natural language appropriate to the product, and avoid marketing hype. Focus on helping buyers understand what the product does and who it's for.`
-      }
+Be specific and technical where appropriate. Use natural language appropriate to the product, and avoid marketing hype. Focus on helping buyers understand what the product does and who it's for.`,
+      },
     ];
 
     try {
       const response = await this.callAPI(messages, {
-        maxCompletionTokens: 500
+        maxCompletionTokens: 500,
       });
 
       this.setCache(cacheKey, response);
@@ -340,7 +342,7 @@ Be specific and technical where appropriate. Use natural language appropriate to
    */
   clearCache() {
     const keys = Object.keys(localStorage);
-    keys.forEach(key => {
+    keys.forEach((key) => {
       if (key.startsWith('openai_cache_')) {
         localStorage.removeItem(key);
       }
@@ -350,4 +352,3 @@ Be specific and technical where appropriate. Use natural language appropriate to
 }
 
 export default OpenAIService;
-

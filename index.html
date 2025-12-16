@@ -58,14 +58,14 @@
         }
         
         /* Hero Section */
-        .hero-intro {
+        main > div:first-child > div {
             text-align: center;
             padding: 4rem 2rem 3rem;
             max-width: 900px;
             margin: 0 auto;
         }
         
-        .hero-intro h1 {
+        main > div:first-child > div h1 {
             font-size: 2.5rem;
             font-weight: 700;
             color: #f5f5f5;
@@ -74,7 +74,7 @@
             line-height: 1.2;
         }
         
-        .hero-intro p {
+        main > div:first-child > div p {
             font-size: 1.125rem;
             color: #9f9f9f;
             line-height: 1.6;
@@ -83,15 +83,15 @@
         }
         
         @media (width <= 768px) {
-            .hero-intro {
+            main > div:first-child > div {
                 padding: 3rem 1.5rem 2rem;
             }
             
-            .hero-intro h1 {
+            main > div:first-child > div h1 {
                 font-size: 2rem;
             }
             
-            .hero-intro p {
+            main > div:first-child > div p {
                 font-size: 1rem;
             }
         }
@@ -114,16 +114,12 @@
     <main>
         <div>
             <div>
-                <div class="hero-intro">
-                    <h1>LLM-Optimized Product Profile Generator</h1>
-                    <p>Transform product pages into AI-ready profiles with structured data and intelligent narratives</p>
-                </div>
+                <h1>LLM-Optimized Product Profile Generator</h1>
+                <p>Transform product pages into AI-ready profiles with structured data and intelligent narratives</p>
             </div>
         </div>
         <div>
-            <div>
-                <div class="product-profile-generator"></div>
-            </div>
+            <div class="product-profile-generator"></div>
         </div>
     </main>
 </body>

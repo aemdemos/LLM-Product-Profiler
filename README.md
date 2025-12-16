@@ -94,6 +94,47 @@ Some sites work fine with the Cloudflare Worker:
 - Sites that don't use Demandware, Cloudflare Bot Management, or similar
 - Static product pages without JavaScript challenges
 
+## Known Limitations
+
+### ⚠️ Bot Protection on Production Sites
+
+**Important:** The hybrid proxy approach (local Python proxy + Cloudflare Worker) only works during local development. On the published EDS site, visitors will only have access to the Cloudflare Worker.
+
+**What This Means:**
+
+- ✅ **During Development** (`localhost:3000`): All sites work when Python proxy is running
+- ❌ **On Published Site** (Production EDS URL): Sites with bot protection will be blocked
+
+**Sites Known to Have Bot Protection:**
+- TaylorMade Golf (Demandware DDUser-Challenge)
+- Home Depot (Cloudflare Bot Management)
+- Nike, Adidas (Advanced bot detection)
+- Most major e-commerce retailers
+
+**Why This Happens:**
+
+Cloudflare Workers run on datacenter IP addresses that bot detection systems recognize and block. The local Python proxy works because it runs on your residential IP address, which appears more legitimate to bot protection systems.
+
+**Recommendations for Production:**
+
+1. **Focus on compatible sites**: Test product URLs to identify sites that work with the Cloudflare Worker
+2. **User guidance**: The app shows clear error messages when bot protection is detected
+3. **Enterprise solution**: For production use with protected sites, consider:
+   - Paid residential proxy services (ScraperAPI, Bright Data, Oxylabs)
+   - Direct API partnerships with manufacturers
+   - Official product data feeds
+
+**For Development/Testing:**
+
+Always run the Python proxy alongside your AEM dev server to access all sites:
+```bash
+# Terminal 1
+cd /Users/clotton/repos/gw20251208 && python3 proxy-server.py
+
+# Terminal 2
+cd /Users/clotton/repos/LLM-Product-Profiler && aem up
+```
+
 ## Project Structure
 
 ```

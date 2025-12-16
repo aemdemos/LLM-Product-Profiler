@@ -120,7 +120,30 @@ export default async function decorate(block) {
       }
 
       if (!html) {
-        throw new Error(`All proxy attempts failed. Last error: ${lastError?.message || 'Unknown error'}\n\nThis site may have bot protection. Try:\n1. Running the local Python proxy: python3 proxy-server.py\n2. Using a different product URL from a less protected site`);
+        // Check if it's a bot protection error
+        const errorMsg = lastError?.message || '';
+        const isBotProtection = errorMsg.includes('403') || 
+                               errorMsg.includes('Forbidden') || 
+                               errorMsg.includes('redirect') ||
+                               errorMsg.includes('bot protection');
+        
+        if (isBotProtection) {
+          throw new Error(`⚠️ This site has bot protection that blocks automated access.\n\n` +
+            `Sites like TaylorMade, Home Depot, Nike, and other major retailers use advanced security that prevents our service from accessing their pages.\n\n` +
+            `✅ What you can try:\n` +
+            `• Use product pages from smaller retailers\n` +
+            `• Try manufacturer sites without heavy security\n` +
+            `• Contact us for enterprise API access\n\n` +
+            `💡 During development, you can run the local Python proxy to bypass these restrictions.\n\n` +
+            `Technical details: ${errorMsg}`);
+        }
+        
+        throw new Error(`Failed to fetch product page.\n\n` +
+          `${errorMsg}\n\n` +
+          `Please check:\n` +
+          `• Is the URL accessible?\n` +
+          `• Does the page load in a browser?\n` +
+          `• Is the URL correct?`);
       }
     }
 
@@ -291,6 +314,28 @@ ${styleClose}`;
     }
   }
 
+  function displayError(error) {
+    const errorMessage = error.message || 'Unknown error occurred';
+    const lines = errorMessage.split('\n').filter((line) => line.trim());
+    
+    resultsDiv.style.display = 'block';
+    resultsDiv.innerHTML = `
+      <div class="result-section error-container">
+        <div class="error-header">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#e34850" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <h2 style="color: #e34850; margin: 0;">Unable to Generate Profile</h2>
+        </div>
+        <div class="error-message">
+          ${lines.map((line) => `<p>${escapeHtml(line)}</p>`).join('')}
+        </div>
+      </div>
+    `;
+  }
+
   function displayProfile(profile) {
     const productName = profile.structuredData.name;
     const embedCodeHtml = escapeHtml(generateEmbedCode(profile));
@@ -379,17 +424,8 @@ ${styleClose}`;
       const profile = await generateProfile(url);
       displayProfile(profile);
     } catch (error) {
-      resultsDiv.innerHTML = `
-        <div class="result-section">
-          <h2>Error</h2>
-          <div class="tab-content active" style="display: block; padding: 1.5rem;">
-            <p style="color: #e34850;">Failed to generate profile: ${error.message}</p>
-            <p style="color: #9f9f9f; margin-top: 1rem; font-size: 0.875rem;">
-              Make sure the URL is accessible and contains valid product information.
-            </p>
-          </div>
-        </div>
-      `;
+      console.error('Error generating profile:', error);
+      displayError(error);
     }
   });
 }

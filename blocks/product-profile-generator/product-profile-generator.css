@@ -483,6 +483,53 @@
   background: #505050;
 }
 
+/* Error Display */
+.error-container {
+  background: #2d2d2d;
+  border: 1px solid #3d3d3d;
+  border-radius: 4px;
+  padding: 2rem;
+  margin-top: 1.5rem;
+}
+
+.error-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #3d3d3d;
+}
+
+.error-header svg {
+  flex-shrink: 0;
+}
+
+.error-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.error-message {
+  color: #e0e0e0;
+  line-height: 1.6;
+}
+
+.error-message p {
+  margin: 0.75rem 0;
+}
+
+.error-message p:first-child {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #f5f5f5;
+}
+
+.error-message p:empty {
+  display: none;
+}
+
 /* Responsive Design */
 @media (width <= 768px) {
   .product-profile-generator {

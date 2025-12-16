@@ -83,16 +83,45 @@ export default async function decorate(block) {
       const response = await fetch(url);
       html = await response.text();
     } else {
-      // External URL - use Cloudflare Worker proxy
-      const proxyUrl = `https://llm-product-profiler-worker.chrislotton.workers.dev/api/fetch-url?url=${encodeURIComponent(url)}`;
-      const response = await fetch(proxyUrl);
+      // External URL - try multiple proxy options (local Python proxy first, then Cloudflare Worker)
+      const proxies = [
+        {
+          name: 'Local Python Proxy',
+          url: `http://localhost:8081/api/fetch-url?url=${encodeURIComponent(url)}`
+        },
+        {
+          name: 'Cloudflare Worker',
+          url: `https://llm-product-profiler-worker.chrislotton.workers.dev/api/fetch-url?url=${encodeURIComponent(url)}`
+        }
+      ];
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to fetch via proxy: ${errorText}`);
+      let lastError;
+      
+      for (const proxy of proxies) {
+        try {
+          console.log(`[Generator] Trying ${proxy.name}...`);
+          const response = await fetch(proxy.url, { 
+            signal: AbortSignal.timeout(15000) // 15 second timeout
+          });
+
+          if (response.ok) {
+            html = await response.text();
+            console.log(`[Generator] Successfully fetched via ${proxy.name}`);
+            break;
+          }
+          
+          const errorText = await response.text();
+          lastError = new Error(`${proxy.name} failed: ${errorText}`);
+          console.warn(`[Generator] ${proxy.name} returned ${response.status}`, errorText);
+        } catch (error) {
+          lastError = error;
+          console.warn(`[Generator] ${proxy.name} error:`, error.message);
+        }
       }
 
-      html = await response.text();
+      if (!html) {
+        throw new Error(`All proxy attempts failed. Last error: ${lastError?.message || 'Unknown error'}\n\nThis site may have bot protection. Try:\n1. Running the local Python proxy: python3 proxy-server.py\n2. Using a different product URL from a less protected site`);
+      }
     }
 
     const parser = new DOMParser();

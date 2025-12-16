@@ -60,6 +60,40 @@ Cloudflare Worker (Backend API)
    - **Structured Data** - JSON-LD for schema.org
    - **Raw Data** - Debug view of extracted data
 
+### Working with Protected Sites
+
+Many e-commerce sites (TaylorMade, Home Depot, etc.) have bot protection that may block the Cloudflare Worker proxy. For maximum compatibility:
+
+**Option 1: Use Local Python Proxy (Recommended for Development)**
+
+The original garage week app included a Python proxy that works better with protected sites. The frontend automatically tries this first:
+
+1. **Clone the original app:**
+   ```bash
+   cd /Users/clotton/repos
+   git clone https://github.com/ckkovac/gw20251208.git
+   cd gw20251208
+   ```
+
+2. **Start the Python proxy:**
+   ```bash
+   python3 proxy-server.py
+   ```
+   Server runs at: http://localhost:8081
+
+3. **Keep both running:**
+   - Python proxy: http://localhost:8081 (handles protected sites)
+   - AEM dev server: http://localhost:3000 (your EDS site)
+
+The frontend will automatically try the local proxy first, then fall back to the Cloudflare Worker.
+
+**Option 2: Use Less Protected Sites**
+
+Some sites work fine with the Cloudflare Worker:
+- Product pages without aggressive bot detection
+- Sites that don't use Demandware, Cloudflare Bot Management, or similar
+- Static product pages without JavaScript challenges
+
 ## Project Structure
 
 ```

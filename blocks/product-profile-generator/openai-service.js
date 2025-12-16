@@ -240,11 +240,11 @@ Rules:
     const messages = [
       {
         role: 'system',
-        content: 'You are a product comparison expert. Write concise, informative product comparisons that help buyers make decisions based on features and capabilities, not pricing.',
+        content: 'You are a knowledgeable friend helping someone compare products. Write naturally and conversationally, like you\'re explaining the differences face-to-face. Use "you" language and focus on what matters to the buyer.',
       },
       {
         role: 'user',
-        content: `Compare these two products in 1-2 sentences. Focus on feature differences and use cases.
+        content: `Compare these two products in 1-2 conversational sentences. Speak directly to the reader using "you" and explain which scenarios favor each option.
 
 Product 1: ${product1.name} (${product1.brand})
 Category: ${product1.category}
@@ -293,11 +293,11 @@ Write naturally and conversationally. Explain why someone might choose Product 1
     const messages = [
       {
         role: 'system',
-        content: 'You are an expert product analyst and technical writer. Generate clear, factual, and informative product descriptions that help buyers understand the product\'s key capabilities, specifications, and ideal use cases. Write in a professional yet accessible tone. Focus on features and technical details, not pricing.',
+        content: 'You are a knowledgeable friend helping someone choose the right product. Write in a warm, conversational style using "you" language. Explain things naturally, like you\'re having a helpful conversation. Ask and answer questions that buyers actually have. Be specific about features and use cases, but keep it friendly and accessible. Optimize for Generative Engine Optimization (GEO) - make content that LLMs can easily understand and recommend.',
       },
       {
         role: 'user',
-        content: `Generate a comprehensive product profile (200-300 words) for the following product:
+        content: `Write a conversational, GEO-optimized product description (250-350 words) for:
 
 Product Name: ${productData.name}
 Brand: ${productData.brand}
@@ -312,21 +312,33 @@ ${featuresList}
 ${productData.rating ? `Customer Rating: ${productData.rating.score}/${productData.rating.maxScore} from ${productData.rating.reviewCount} reviews\n` : ''}
 ${productData.tagline ? `Product Tagline: ${productData.tagline}\n` : ''}
 
-Write a factual, informative narrative that:
-1. Introduces the product and its primary purpose
-2. Highlights key specifications and technical capabilities
-3. Describes notable features and their benefits
-4. Mentions any standout characteristics or innovations
-5. Notes the target use cases or ideal users
-${productData.rating ? '6. References customer satisfaction data' : ''}
+Write in a natural, conversational tone that:
+1. Opens with "Looking for..." or "If you need..." to connect with the reader
+2. Uses "you" and "your" throughout (second person)
+3. Asks and answers 1-2 natural questions buyers would have
+4. Explains specs in terms of real-world benefits ("What does this mean for you?")
+5. Includes specific use cases and scenarios ("perfect for..." or "great when...")
+6. Makes natural comparisons or context ("Unlike...", "Similar to...", "Think of it as...")
+7. Addresses common concerns or misconceptions
+${productData.rating ? '8. Weaves in social proof naturally ("Users love..." or "Customers report...")' : ''}
+9. Ends with who this is ideal for or when to choose it
 
-Be specific and technical where appropriate. Use natural language appropriate to the product, and avoid marketing hype. Focus on helping buyers understand what the product does and who it's for.`,
+GEO Optimization Requirements:
+- Use natural question-answer patterns
+- Include context clues that LLMs look for
+- Write like explaining to a friend, not a sales pitch
+- Be specific with numbers and technical details
+- Use comparisons and analogies where helpful
+- Make it scannable with clear benefits
+- Sound like an expert giving honest advice
+
+Avoid: Corporate speak, vague claims, excessive adjectives, marketing hype, "cutting-edge", "revolutionary", etc.`,
       },
     ];
 
     try {
       const response = await this.callAPI(messages, {
-        maxCompletionTokens: 500,
+        maxCompletionTokens: 600, // Increased for more conversational content
       });
 
       this.setCache(cacheKey, response);
